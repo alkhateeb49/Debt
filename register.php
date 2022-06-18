@@ -1,6 +1,6 @@
 <?php
 //db_connection
-include 'db_connection.php';
+include 'classes/db_connection.php';
 
 if($_SERVER["REQUEST_METHOD"] == "POST") {
 
@@ -12,8 +12,6 @@ if($_SERVER["REQUEST_METHOD"] == "POST") {
 
     $sql = "SELECT * FROM users WHERE email = '$email' or phone = '$phone'";
     $result = $conn->query($sql);
-    $row = $result->fetch_assoc();
-
     if($result->num_rows > 0) {
         $error = "Email or Mobile Number already exists";
         http_response_code(405);
@@ -23,8 +21,19 @@ if($_SERVER["REQUEST_METHOD"] == "POST") {
         VALUES ('$email','$name','$phone','$pic',CURRENT_TIMESTAMP(),'$password')";
 
         if ($conn->query($sql) === TRUE) {
+            
+            $sql = "SELECT * FROM users WHERE (email = '$email' or phone = '$phone') and Password = '$password'";
+            $result = $conn->query($sql);
+            while($row = $result->fetch_assoc()){
+                $id=$row['id'];
+                $email=$row['email'];
+                $password=$row['password'];
+                }
             http_response_code(200);
-            echo "done";
+            // echo "done";
+            $data = ['id'=> $id,'email'=>$email,'token' => crypt($email.date('d'),$password)];
+            header('Content-Type: application/json; charset=utf-8');
+            echo json_encode($data);
         } else {
             http_response_code(405);
             echo "Error: " . $sql . $conn->error;
